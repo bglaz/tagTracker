@@ -7,6 +7,8 @@ lib-cov
 *.pid
 *.gz
 
+app/node_modules/twitter_api/config.js
+
 pids
 logs
 results
