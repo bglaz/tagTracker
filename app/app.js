@@ -3,7 +3,7 @@ var app = require('http').createServer(handler)
   , fs = require('fs')
   , twitter = require('twitter_api')
   
-twitter.testFn();
+twitter.getTweets('japan');
 
 app.listen(8080);
 
@@ -21,8 +21,5 @@ function handler (req, res) {
 }
 
 io.sockets.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
-  });
+  console.log("Client Connected with ID: [" + socket.id + "]");
 });
