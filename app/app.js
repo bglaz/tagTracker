@@ -3,7 +3,7 @@ var app = require('http').createServer(handler)
   , fs = require('fs')
   , twitter = require('twitter_api')
   
-twitter.getTweets('japan');
+//twitter.getTweets('japan',processTweets);
 
 app.listen(8080);
 
@@ -20,6 +20,17 @@ function handler (req, res) {
   });
 }
 
+function processTweets(tweet_data) {
+
+}
+
 io.sockets.on('connection', function (socket) {
   console.log("Client Connected with ID: [" + socket.id + "]");
+
+  socket.on('trackTag', function(data) {
+    twitter.getTweets(data['tagName'], function(data) {
+      socket.emit('tweetData',data);
+      console.log("sent tweet data");
+    })
+  })
 });
