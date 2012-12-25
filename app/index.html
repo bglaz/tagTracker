@@ -23,7 +23,6 @@
            				<ul class="nav">
 			              <li class="active"><a href="#">Home</a></li>
 			              <li><a href="#about">About</a></li>
-			              <li><a href="#contact">Contact</a></li>
             			</ul>
           			</div>
        		 	</div>
@@ -59,18 +58,64 @@
 		<script src="/js/mustache.js"></script>
 		<script src="/js/bootstrap.min.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
-		<script>
-		  var socket = io.connect('http://localhost');
-		  socket.on('tweetData', function (data) {
-		  	console.log(data);
-		    $('#results').append('<div>' + data.text + '</div>');
-		  });
 
-		  $(function() {
-		  	$('#track_tag_btn').click(function() {
-		  		socket.emit('trackTag',{tagName: $('#tagName').val()});
-		  	});
-		  });
+		<script id="tweetTpl" type="text/tweetTpl">
+			<div class="media" style="display: none;">
+				<a class="pull-left" href="http://www.twitter.com/{{user.screen_name}}">
+					<img class="media-object" style="width: 48px; height: 48px; background-color: #CCC;" src="{{user.profile_image_url}}" />
+				</a>
+				<div class="media-body">
+					<h4 class="media-heading">
+						<a href="http://www.twitter.com/{{user.screen_name}}">@{{user.screen_name}}</a>
+					</h4>
+					<p>
+						{{{text}}}
+					</p>
+				</div>
+			</div>
 		</script>
+
+		<script>
+		  	$(function() {
+
+		  		//compile templates
+		  		var templates = ['tweet'];
+		  		var compiledTemplates = {};
+		  		for(var i = 0, len = templates.length; i < len; i++) {
+		  			var tmp_name = templates[i];
+		  			compiledTemplates[tmp_name] = Mustache.compile($('#' + tmp_name + 'Tpl').html());
+		  		}
+
+		  		//create a blank queue of tweet objects
+		  		var tweetsQueue = [];
+
+		  		//set up a socket to receive tweet data
+		  		var socket = io.connect('http://localhost');
+			  	socket.on('tweetData', function (data) {
+			  		if(data.text) {
+			  			console.log(data);
+			  			tweetsQueue.push(data);
+			    	}
+			  	});
+
+			  	//function to render tweets
+			  	var renderTweet = function() {
+			  		if(tweetsQueue.length) {
+			  			var tweetData = tweetsQueue.pop();
+			  			$(compiledTemplates['tweet'](tweetData)).prependTo('#results').fadeIn();
+			  		}
+			  	}
+
+			  	var t = setInterval(function() {
+			  		renderTweet();
+			  	},2000);
+
+			  	//bind UI events
+		  		$('#track_tag_btn').click(function() {
+		  			socket.emit('trackTag',{tagName: $('#tagName').val()});
+		  		});
+		  	});
+		</script>
+
 	</body>
 </html>
