@@ -68,7 +68,7 @@
 						<div id="images" class="span12" style="height: 48%; margin-bottom: 2%; overflow: auto;">
 							
 						</div>
-						<div id="map" class="span12" style="height: 50%; overflow: auto;">
+						<div id="map" class="span12" style="height: 50%; width: 100%;">
 							
 						</div>
 					</div>
@@ -81,6 +81,7 @@
     	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 		<script src="/js/mustache.js"></script>
 		<script src="/js/bootstrap.min.js"></script>
+		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAMef5xCy9cwUnMh8bE7M1mJ2RL8OnqyvE&sensor=false"></script>
 		<script src="/socket.io/socket.io.js"></script>
 
 		<script id="tweetTpl" type="text/tweetTpl">
@@ -110,8 +111,19 @@
 		  			compiledTemplates[tmp_name] = Mustache.compile($('#' + tmp_name + 'Tpl').html());
 		  		}
 
+		  		//set up google map
+		  		var mapOptions = {
+          			center: new google.maps.LatLng(-34.397, 150.644),
+          			zoom: 0,
+          			mapTypeId: google.maps.MapTypeId.ROADMAP
+        		};
+        		var gmap = new google.maps.Map(document.getElementById('map'),mapOptions);
+
 		  		//create a blank queue of tweet objects
 		  		var tweetsQueue = [];
+
+		  		//create an array of google map markers
+		  		var mapLocations = [];
 
 		  		//set up a socket to receive tweet data
 		  		var socket = io.connect('http://localhost');
@@ -132,12 +144,32 @@
 			  				var img = $('<img src="' + tweetData.entities.media[0].media_url + ':thumb" />');
 			  				img.prependTo('#images').fadeIn();
 			  			}
+
+			  			//check for geo location
+			  			if(tweetData.coordinates) {
+			  				var location = new google.maps.LatLng(tweetData.coordinates.coordinates[1],tweetData.coordinates.coordinates[0]);
+			  				var mapMarker = new google.maps.Marker({
+			  					position: 	location,
+			  					map: 	gmap 
+			  				});
+			  				mapLocations.push(location);
+			  				updateMap();
+			  			}
 			  		}
 			  	}
 
 			  	var t = setInterval(function() {
 			  		renderTweet();
 			  	},2000);
+
+			  	//update map to show all markers
+			  	var updateMap = function() {
+			  		var bounds = new google.maps.LatLngBounds();
+			  		for(var i = 0, len = mapLocations.length; i < len; i++) {
+			  			bounds.extend(mapLocations[i]);
+			  		}
+			  		gmap.fitBounds(bounds);
+			  	}
 
 			  	//bind UI events
 		  		$('#track_tag_btn').click(function() {
